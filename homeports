@@ -30,11 +30,9 @@ Entry Management Commands:
 
 Repository Management Commands:
   commit  : commit changes
-  diff    : 
   pull    : pull updates from remote
   push    : push updates to remote
-  show-remote
-          : show remote information
+  remote  : show remote information
 
 Utility Commands:
   doctor  : check dependencies
@@ -99,12 +97,6 @@ hp-commit() {
   git commit -m "Edit ${entries}"
 }
 
-hp-diff() {
-  cd $HP_USER_HOME
-  git fetch
-  git diff origin/master
-}
-
 hp-pull() {
   cd $HP_USER_HOME
   git pull
@@ -115,7 +107,7 @@ hp-push() {
   git push
 }
 
-hp-show-remote() {
+hp-remote() {
   cd $HP_USER_HOME
   git fetch
   echo "Repository:"
