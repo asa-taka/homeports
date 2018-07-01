@@ -1,91 +1,151 @@
 #! /bin/bash
 
-# User Configurable Envs (prefixed by `HOMEPORTS_`)
-HOMEPORTS_DIR=${HOMEPORTS_DIR:-$HOME/.homeports}
-HOMEPORTS_EDITOR=${HOMEPORTS_EDITOR:-code}
-HOMEPORTS_SHELL=${HOMEPORTS_SHELL:-bash}
-
-# Internal Use Params (prefixed by `HP_`)
-HP_CACHE=${HOMEPORTS_DIR}/cache
-
 # Command Args
 subcommand=${1}
+
+# User Configurable Params (prefixed by `HOMEPORTS_`)
+HP_DIR=${HOMEPORTS_DIR:-$HOME/.homeports}
+HP_EDITOR=${HOMEPORTS_EDITOR:-code}
+HP_SHELL=${HOMEPORTS_SHELL:-bash}
+
 set -u
 
-homeports-help() {
+# Internal Use Params
+HP_USER_HOME=${HP_DIR}/home
+HP_CACHE=${HP_DIR}/cache
+
+hp-help() {
 cat << __EOM__
 Management user home
 Usage: homeports <command> ...
 
 Entry Management Commands:
-  add <file>
-          : register file to be under homeports management (with commit)
-  edit    : open homeports directory by HOMEPORTS_EDTOR=${HOMEPORTS_EDITOR}
+  add <file> [<file> ...]
+          : register files to be under homeports management (with commit)
+  edit    : open homeports directory by HOMEPORTS_EDTOR=${HP_EDITOR}
+  install : create symlinks
   list    : list all registered entries
-  rm <entry>
+  rm [<entry> ...]
           : unregister the entry (with commit)
 
 Repository Management Commands:
   commit  : commit changes
   pull    : pull updates from remote
   push    : push updates to remote
-
-Utility Commands:
-  env     : show configurable ENVs
-  init    : clean all registered contents
-  log     : show commit log
-  sh      : enter homeports shell by HOMEPORTS_SHELL=${HOMEPORTS_SHELL}
   show-remote
           : show remote information
+
+Utility Commands:
+  doctor  : check dependencies
+  env     : show configurable ENVs
+  help    : show this help
+  init    : clean all registered contents
+  log     : show commit log
+  sh      : enter homeports shell by HOMEPORTS_SHELL=${HP_SHELL}
+  update  : update homeports
 __EOM__
 }
 
-# Sub-commands
-# ------------
+# Entry Management Commands
+# -------------------------
 
-homeports-commit() {
-  homeports-dotfiles commit
-  homeports-bin commit
+hp-add() {
+  new_entries=""
+  for src in $@; do
+    echo $src
+    src_path_from_home=$(realpath --relative-base ~ $src)
+    dest_dir=$(dirname $HP_USER_HOME/$src_path_from_home)
+    mkdir -p $dest_dir
+    cp -r $src $dest_dir
+    echo "copy ~/${src_path_from_home} -> ${dest_dir}"
+    new_entries+=$(basename $src),
+  done;
+
+  cd $HP_USER_HOME
+  git add .
+  git commit -m "Add ${new_entries%?}"
 }
 
-homeports-edit() {
-  $HOMEPORTS_EDITOR $HOMEPORTS_DIR
+hp-edit() {
+  $HP_EDITOR $HP_USER_HOME
 }
 
-homeports-env() {
-  echo "HOMEPORTS_DIR    =${HOMEPORTS_DIR}"
-  echo "HOMEPORTS_SHELL  =${HOMEPORTS_SHELL}"
-  echo "HOMEPORTS_EDITOR =${HOMEPORTS_EDITOR}"
+hp-list() {
+  cd $HP_USER_HOME
+  find . -type f | cut -sd / -f 2- | grep -v .git
 }
 
-homeports-log() {
-  cd $HOMEPORTS_DIR
-  git log
+hp-install() {
+  for src in $(hp-list); do
+    echo "Craete symlink ${HP_USER_HOME}/${src} > ~/${src}"
+    ln -s ${HP_USER_HOME}/$src ~/$src
+  done
 }
 
-homeports-sh() {
-  echo "Enter ${HOMEPORTS_DIR}"
-  cd $HOMEPORTS_DIR
-  $HOMEPORTS_SHELL
+hp-rm() {
+  cd $HP_USER_HOME
+  git rm -r $@
+  git commit -m "Remove $@"
 }
 
-homeports-pull() {
-  cd $HOMEPORTS_DIR
+# Repository Management Commands
+# ------------------------------
+
+hp-commit() {
+  cd $HP_USER_HOME
+  entries=$(git diff --name-only | cut -sd / -f 2- | tr '\n' ' ')
+  git add .
+  git commit -m "Edit ${entries}"
+}
+
+hp-pull() {
+  cd $HP_USER_HOME
   git pull
 }
 
-homeports-push() {
-  cd $HOMEPORTS_DIR
+hp-push() {
+  cd $HP_USER_HOME
   git push
 }
 
-homeports-show-remote() {
-  cd $HOMEPORTS_DIR
+hp-show-remote() {
+  cd $HP_USER_HOME
   git fetch
   echo "Repository:"
   git remote -v
   echo "Diff:"
   git diff origin/master
+}
+
+# Utility Commands
+# ----------------
+
+hp-doctor() {
+  if ! type realpath &> /dev/null; then
+    echo "Missing a command 'realpath', it's packaged in GNU 'coreutils'"
+  fi
+}
+
+hp-env() {
+  echo "HOMEPORTS_DIR    =${HP_DIR}"
+  echo "HOMEPORTS_SHELL  =${HP_SHELL}"
+  echo "HOMEPORTS_EDITOR =${HP_EDITOR}"
+}
+
+hp-log() {
+  cd $HP_USER_HOME
+  git log
+}
+
+hp-sh() {
+  echo "Enter ${HP_DIR}"
+  cd $HP_USER_HOME
+  $HP_SHELL
+}
+
+hp-update() {
+  cd $HP_DIR
+  git pull
 }
 
 # Utilities
@@ -104,13 +164,13 @@ confirm() {
 
 case $subcommand in
     "" | "-h" | "--help")
-        homeports-help
+        hp-help
         ;;
     *)
         shift
-        homeports-${subcommand} $@
+        hp-${subcommand} $@
         if [ $? = 127 ]; then
-          homeports-help
+          hp-help
         fi
         ;;
 esac
