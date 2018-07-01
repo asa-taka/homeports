@@ -1,0 +1,116 @@
+#! /bin/bash
+
+# User Configurable Envs (prefixed by `HOMEPORTS_`)
+HOMEPORTS_DIR=${HOMEPORTS_DIR:-$HOME/.homeports}
+HOMEPORTS_EDITOR=${HOMEPORTS_EDITOR:-code}
+HOMEPORTS_SHELL=${HOMEPORTS_SHELL:-bash}
+
+# Internal Use Params (prefixed by `HP_`)
+HP_CACHE=${HOMEPORTS_DIR}/cache
+
+# Command Args
+subcommand=${1}
+set -u
+
+homeports-help() {
+cat << __EOM__
+Management user home
+Usage: homeports <command> ...
+
+Entry Management Commands:
+  add <file>
+          : register file to be under homeports management (with commit)
+  edit    : open homeports directory by HOMEPORTS_EDTOR=${HOMEPORTS_EDITOR}
+  list    : list all registered entries
+  rm <entry>
+          : unregister the entry (with commit)
+
+Repository Management Commands:
+  commit  : commit changes
+  pull    : pull updates from remote
+  push    : push updates to remote
+
+Utility Commands:
+  env     : show configurable ENVs
+  init    : clean all registered contents
+  log     : show commit log
+  sh      : enter homeports shell by HOMEPORTS_SHELL=${HOMEPORTS_SHELL}
+  show-remote
+          : show remote information
+__EOM__
+}
+
+# Sub-commands
+# ------------
+
+homeports-commit() {
+  homeports-dotfiles commit
+  homeports-bin commit
+}
+
+homeports-edit() {
+  $HOMEPORTS_EDITOR $HOMEPORTS_DIR
+}
+
+homeports-env() {
+  echo "HOMEPORTS_DIR    =${HOMEPORTS_DIR}"
+  echo "HOMEPORTS_SHELL  =${HOMEPORTS_SHELL}"
+  echo "HOMEPORTS_EDITOR =${HOMEPORTS_EDITOR}"
+}
+
+homeports-log() {
+  cd $HOMEPORTS_DIR
+  git log
+}
+
+homeports-sh() {
+  echo "Enter ${HOMEPORTS_DIR}"
+  cd $HOMEPORTS_DIR
+  $HOMEPORTS_SHELL
+}
+
+homeports-pull() {
+  cd $HOMEPORTS_DIR
+  git pull
+}
+
+homeports-push() {
+  cd $HOMEPORTS_DIR
+  git push
+}
+
+homeports-show-remote() {
+  cd $HOMEPORTS_DIR
+  git fetch
+  echo "Repository:"
+  git remote -v
+  echo "Diff:"
+  git diff origin/master
+}
+
+# Utilities
+# ---------
+
+confirm() {
+  read -p "$1 [y/N]: " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 0
+  fi
+}
+
+# Main Script
+# -----------
+
+case $subcommand in
+    "" | "-h" | "--help")
+        homeports-help
+        ;;
+    *)
+        shift
+        homeports-${subcommand} $@
+        if [ $? = 127 ]; then
+          homeports-help
+        fi
+        ;;
+esac
