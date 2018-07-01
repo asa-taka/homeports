@@ -30,6 +30,7 @@ Entry Management Commands:
 
 Repository Management Commands:
   commit  : commit changes
+  diff    : 
   pull    : pull updates from remote
   push    : push updates to remote
   show-remote
@@ -96,6 +97,12 @@ hp-commit() {
   entries=$(git diff --name-only | cut -sd / -f 2- | tr '\n' ' ')
   git add .
   git commit -m "Edit ${entries}"
+}
+
+hp-diff() {
+  cd $HP_USER_HOME
+  git fetch
+  git diff origin/master
 }
 
 hp-pull() {
