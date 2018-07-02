@@ -42,6 +42,7 @@ Entry Management Commands:
   list    : list all registered entries
   rm [<entry> ...]
           : unregister the entry (with commit)
+  unlink  : remove all symlinks
 
 Repository Management Commands:
   commit  : commit changes

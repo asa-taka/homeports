@@ -29,6 +29,7 @@ Entry Management Commands:
   list    : list all registered entries
   rm [<entry> ...]
           : unregister the entry (with commit)
+  unlink  : remove all symlinks
 
 Repository Management Commands:
   commit  : commit changes
@@ -110,6 +111,17 @@ hp-rm() {
   cd $HP_USER_HOME
   git rm -r $@
   git commit -m "Remove $@"
+}
+
+hp-unlink() {
+  confirm "It removes all symlinks. Continue?"
+  for entry in $(hp-list); do
+    link=$HOME/$entry
+    if is-managed-symlink $link; then
+      echo "Remove ${link}" 
+      rm $link
+    fi
+  done
 }
 
 # Repository Management Commands
