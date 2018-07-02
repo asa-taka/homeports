@@ -30,13 +30,15 @@ If you do so, set `HOMEPORTS_DIR` properly for the path you installed.
 ```
 $ homeports help
 Management user home
-Usage: homeports <command> ...
+Usage: homeports <command> ...
 
 Entry Management Commands:
   add <file> [<file> ...]
           : register files to be under homeports management (with commit)
+  delink  : replace all symlinks into reguler files
   edit    : open homeports directory by HOMEPORTS_EDTOR=${HP_EDITOR}
-  install : create symlinks
+  link    : create symlinks
+  links   : list all symlinks
   list    : list all registered entries
   rm [<entry> ...]
           : unregister the entry (with commit)
@@ -45,12 +47,12 @@ Repository Management Commands:
   commit  : commit changes
   pull    : pull updates from remote
   push    : push updates to remote
-  show-remote
-          : show remote information
+  remote  : show remote information
 
 Utility Commands:
   doctor  : check dependencies
   env     : show configurable ENVs
+  find    : find all links pointing the repository under $HOME
   help    : show this help
   init    : clean all registered contents
   log     : show commit log
