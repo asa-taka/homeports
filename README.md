@@ -4,21 +4,51 @@ Now WIP
 
 ## Installation
 
-### When you already have home repository
+- `~/.homeports` is where `homeports` is installed to
+  - It's customizable by `$HOMEPORTS_DIR`
+- `~/.homeports/home` is for your $HOME contents preserver
+
+### What's the Home Repository
+
+Home repository contains the subtree of your $HOME which your want to share by your devices.
+Typically, it would contain stuffs like below...
+
+```
+$ tree -a
+.
+├── .bash_profile
+└── bin
+    └── my-script
+```
+
+### When you already have your $HOME repository
 
 ```sh
+# Install this tool
 git clone https://github.com/asa-taka/homeports ~/.homeports
+
+# A git repository preserving subset of Your $HOME
 git clone https://github.com/<you>/myhome ~/.homeports/home
+
+# locate `homeports` on your $PATH
 ln -s ~/.homeports/homeports /usr/local/bin # or your desiered location
 ```
 
-### You don't have home repository
+### When you don't have home repository
 
 ```sh
+# Install this tool
 git clone https://github.com/asa-taka/homeports ~/.homeports
+
+# Create new directory
+# later, it should be a git repository
 mkdir ~/.homeports/home
+
+# locate `homeports` on your $PATH
 ln -s ~/.homeports/homeports /usr/local/bin # or your desiered location
 ```
+
+To setup the new directory into a git repository, `homeports sh` is useful to enter there.
 
 ### Tips
 
