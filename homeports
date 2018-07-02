@@ -85,8 +85,10 @@ hp-edit() {
 
 hp-link() {
   for entry in $(hp-list); do
-    echo "Craete symlink: ${HP_USER_HOME}/${entry} -> ~/${entry}"
-    ln -s $HP_USER_HOME/$entry ~/$entry
+    if ! has-symlink $entry; then
+      echo "Craete symlink: ${HP_USER_HOME}/${entry} -> ~/${entry}"
+      ln -s $HP_USER_HOME/$entry ~/$entry
+    fi
   done
 }
 
@@ -199,6 +201,10 @@ is-managed-symlink() {
     return 1
   fi
   return 0
+}
+
+has-symlink() {
+  is-managed-symlink $HOME/$1
 }
 
 # Main Script
