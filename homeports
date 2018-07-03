@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Command Args
+command=${0}
 subcommand=${1}
 
 # User Configurable Params (prefixed by `HOMEPORTS_`)
@@ -69,7 +70,7 @@ hp-add() {
 }
 
 hp-delink() {
-  for entry in $(hp-list); do
+  hp-list | while IFS= read -r entry; do
     link=$HOME/$entry
     if is-managed-symlink "$link"; then
       echo "Delink $link"
@@ -84,17 +85,48 @@ hp-edit() {
 }
 
 hp-link() {
-  for entry in $(hp-list); do
+  declare F_FORCE
+  while getopts fh OPT; do
+    case $OPT in
+      f) F_FORCE=1 ;;
+      h) help-exit ;;
+     \?) help-exit ;;
+    esac
+  done
+
+  hp-list | while IFS= read -r entry; do
     if ! has-symlink "$entry"; then
-      echo "Craete symlink: ${HP_USER_HOME}/${entry} -> ~/${entry}"
-      ln -s "$HP_USER_HOME/$entry" "$HOME/$entry"
+      real="${HP_USER_HOME}/${entry}"
+      link="${HOME}/${entry}"
+
+      # Check existence and treat force option
+      if [ -f "${link}" ]; then
+        if [ -n "${F_FORCE}" ]; then
+          echo "Remove ${link}"
+          rm "${link}"
+        else
+          continue
+        fi
+      fi
+
+      echo "Craete symlink: ${link} -> ${real}"
+      ln -s "${real}" "${link}"
     fi
   done
 }
 
+hp-link-help() {
+  cat << __EOF__
+  Usage: ${command} ${subcommand} [-f]
+  Options:
+    -f : Force replace
+__EOF__
+  exit
+}
+
 hp-links() {
-  for entry in $(hp-list); do
-    link=$HOME/$entry
+  hp-list | while IFS= read -r entry; do
+    link="$HOME/$entry"
     if is-managed-symlink "$link"; then
       print-link "$link"
     fi
@@ -114,7 +146,7 @@ hp-rm() {
 
 hp-unlink() {
   confirm "It removes all symlinks. Continue?"
-  for entry in $(hp-list); do
+  hp-list | while IFS= read -r entry; do
     link=$HOME/$entry
     if is-managed-symlink "$link"; then
       echo "Remove ${link}" 
@@ -221,6 +253,11 @@ is-managed-symlink() {
 
 has-symlink() {
   is-managed-symlink "${HOME}/${1}"
+}
+
+help-exit() {
+  "hp-${subcommand}-help"
+  exit 1;
 }
 
 # Main Script
