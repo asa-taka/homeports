@@ -121,7 +121,6 @@ hp-link-help() {
   Options:
     -f : Force replace
 __EOF__
-  exit
 }
 
 hp-links() {
