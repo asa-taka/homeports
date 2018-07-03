@@ -200,8 +200,7 @@ hp-env() {
 }
 
 hp-find() {
-  echo "Find all links under \$HOME. It takes a few minutes..."
-  links=$(find ~ -lname '*.homeports/home/*')
+  links=$(find "$@" -lname '*.homeports/home/*')
   for link in $links; do
     print-link "$link"
   done
