@@ -12,7 +12,6 @@ set -u
 
 # Internal Use Params
 HP_USER_HOME=${HP_DIR}/home
-HP_CACHE=${HP_DIR}/cache
 
 hp-help() {
 cat << __EOM__
@@ -54,17 +53,17 @@ __EOM__
 
 hp-add() {
   new_entries=""
-  for src in $@; do
-    echo $src
-    src_path_from_home=$(realpath --relative-base ~ $src)
-    dest_dir=$(dirname $HP_USER_HOME/$src_path_from_home)
-    mkdir -p $dest_dir
-    cp -r $src $dest_dir
+  for src in "$@"; do
+    echo "$src"
+    src_path_from_home=$(realpath --relative-base ~ "$src")
+    dest_dir=$(dirname "$HP_USER_HOME/$src_path_from_home")
+    mkdir -p "$dest_dir"
+    cp -r "$src" "$dest_dir"
     echo "copy ~/${src_path_from_home} -> ${dest_dir}"
-    new_entries+=$(basename $src),
+    new_entries+=$(basename "$src"),
   done;
 
-  cd $HP_USER_HOME
+  cd-home
   git add .
   git commit -m "Add ${new_entries%?}"
 }
@@ -72,23 +71,23 @@ hp-add() {
 hp-delink() {
   for entry in $(hp-list); do
     link=$HOME/$entry
-    if is-managed-symlink $link; then
+    if is-managed-symlink "$link"; then
       echo "Delink $link"
-      rm $link
-      cp -r $HP_USER_HOME/$entry $link
+      rm "$link"
+      cp -r "$HP_USER_HOME/$entry" "$link"
     fi
   done
 }
 
 hp-edit() {
-  $HP_EDITOR $HP_USER_HOME
+  $HP_EDITOR "$HP_USER_HOME"
 }
 
 hp-link() {
   for entry in $(hp-list); do
-    if ! has-symlink $entry; then
+    if ! has-symlink "$entry"; then
       echo "Craete symlink: ${HP_USER_HOME}/${entry} -> ~/${entry}"
-      ln -s $HP_USER_HOME/$entry ~/$entry
+      ln -s "$HP_USER_HOME/$entry" "$HOME/$entry"
     fi
   done
 }
@@ -96,30 +95,30 @@ hp-link() {
 hp-links() {
   for entry in $(hp-list); do
     link=$HOME/$entry
-    if is-managed-symlink $link; then
-      print-link $link
+    if is-managed-symlink "$link"; then
+      print-link "$link"
     fi
   done
 }
 
 hp-list() {
-  cd $HP_USER_HOME
+  cd-home
   find . -type f | cut -sd / -f 2- | grep -v .git
 }
 
 hp-rm() {
-  cd $HP_USER_HOME
-  git rm -r $@
-  git commit -m "Remove $@"
+  cd-home
+  git rm -r "$@"
+  git commit -m "Remove $*"
 }
 
 hp-unlink() {
   confirm "It removes all symlinks. Continue?"
   for entry in $(hp-list); do
     link=$HOME/$entry
-    if is-managed-symlink $link; then
+    if is-managed-symlink "$link"; then
       echo "Remove ${link}" 
-      rm $link
+      rm "$link"
     fi
   done
 }
@@ -128,24 +127,24 @@ hp-unlink() {
 # ------------------------------
 
 hp-commit() {
-  cd $HP_USER_HOME
+  cd-home
   entries=$(git diff --name-only | cut -sd / -f 2- | tr '\n' ' ')
   git add .
   git commit -m "Edit ${entries}"
 }
 
 hp-pull() {
-  cd $HP_USER_HOME
+  cd-home
   git pull
 }
 
 hp-push() {
-  cd $HP_USER_HOME
+  cd-home
   git push
 }
 
 hp-remote() {
-  cd $HP_USER_HOME
+  cd-home
   git fetch
   echo "Repository:"
   git remote -v
@@ -170,30 +169,34 @@ hp-env() {
 
 hp-find() {
   echo "Find all links under \$HOME. It takes a few minutes..."
-  links=$(find ~ -lname *.homeports/home/*)
+  links=$(find ~ -lname '*.homeports/home/*')
   for link in $links; do
-    print-link $link
+    print-link "$link"
   done
 }
 
 hp-log() {
-  cd $HP_USER_HOME
-  git log
+  cd-home
+  git log "$@"
 }
 
 hp-sh() {
   echo "Enter ${HP_DIR}"
-  cd $HP_USER_HOME
+  cd-home
   $HP_SHELL
 }
 
 hp-update() {
-  cd $HP_DIR
+  cd "$HP_DIR" || exit
   git pull
 }
 
 # Utilities
 # ---------
+
+cd-home() {
+  cd "$HP_USER_HOME" || exit
+}
 
 confirm() {
   read -p "$1 [y/N]: " -n 1 -r
@@ -204,11 +207,12 @@ confirm() {
 }
 
 print-link() {
-  echo "${1} -> $(realpath $1)"
+  target=$(realpath "$1")
+  echo "${1} -> ${target}"
 }
 
 is-managed-symlink() {
-  path=$(realpath $1)
+  path=$(realpath "$1")
   if [ "${path/$HP_USER_HOME}" = "${path}" ]; then # detect is-not-substring
     return 1
   fi
@@ -216,7 +220,7 @@ is-managed-symlink() {
 }
 
 has-symlink() {
-  is-managed-symlink $HOME/$1
+  is-managed-symlink "${HOME}/${1}"
 }
 
 # Main Script
@@ -228,7 +232,7 @@ case $subcommand in
         ;;
     *)
         shift
-        hp-${subcommand} $@
+        "hp-${subcommand}" "$@"
         if [ $? = 127 ]; then
           hp-help
         fi
