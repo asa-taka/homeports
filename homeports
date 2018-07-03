@@ -15,38 +15,38 @@ set -u
 HP_USER_HOME=${HP_DIR}/home
 
 hp-help() {
-cat << __EOM__
-Management user home
-Usage: homeports <command> ...
+  cat << __EOF__
+  Management user home
+  Usage: homeports <command> ...
 
-Entry Management Commands:
-  add <file> [<file> ...]
-          : register files to be under homeports management (with commit)
-  delink  : replace all symlinks into reguler files
-  edit    : open homeports directory by HOMEPORTS_EDTOR=${HP_EDITOR}
-  link    : create symlinks
-  links   : list all symlinks
-  list    : list all registered entries
-  rm [<entry> ...]
-          : unregister the entry (with commit)
-  unlink  : remove all symlinks
+  Entry Management Commands:
+    add <file> [<file> ...]
+            : register files to be under homeports management (with commit)
+    delink  : replace all symlinks into reguler files
+    edit    : open homeports directory by HOMEPORTS_EDTOR=${HP_EDITOR}
+    link    : create symlinks
+    links   : list all symlinks
+    list    : list all registered entries
+    rm [<entry> ...]
+            : unregister the entry (with commit)
+    unlink  : remove all symlinks
 
-Repository Management Commands:
-  commit  : commit changes
-  pull    : pull updates from remote
-  push    : push updates to remote
-  remote  : show remote information
+  Repository Management Commands:
+    commit  : commit changes
+    pull    : pull updates from remote
+    push    : push updates to remote
+    remote  : show remote information
 
-Utility Commands:
-  doctor  : check dependencies
-  env     : show configurable ENVs
-  find    : find all links pointing the repository under $HOME
-  help    : show this help
-  init    : clean all registered contents
-  log     : show commit log
-  sh      : enter homeports shell by HOMEPORTS_SHELL=${HP_SHELL}
-  update  : update homeports
-__EOM__
+  Utility Commands:
+    doctor  : check dependencies
+    env     : show configurable ENVs
+    find    : find all links pointing the repository under $HOME
+    help    : show this help
+    init    : clean all registered contents
+    log     : show commit log
+    sh      : enter homeports shell by HOMEPORTS_SHELL=${HP_SHELL}
+    update  : update homeports
+__EOF__
 }
 
 # Entry Management Commands
